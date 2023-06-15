@@ -40,7 +40,7 @@ address wrapper
             token_name:String,
             property_version:u64,
             key:vector<String>,
-        ) {
+        ):Object<Wrapper> {
             let owner_addr = signer::address_of(owner);
             assert!(tokenv1::check_collection_exists(creator_address,collection_name),ENO_COLLECTION_DOESNT_EXIST);
             let token_id = tokenv1::create_token_id_raw(creator_address,collection_name,token_name,property_version);
