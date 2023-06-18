@@ -11,8 +11,11 @@ address wrapper
         use aptos_token_objects::aptos_token::{Self as tokenv2,AptosToken as TokenV2};
         use aptos_framework::account;
         use aptos_std::option;
+        use std::vector;
+        use aptos_std::simple_map::{Self, SimpleMap};
 
         use aptos_token::token as tokenv1;
+        use aptos_token::property_map;
 
         /// The collection doesn't exist
         const ENO_COLLECTION_DOESNT_EXIST:u64=1;
@@ -20,14 +23,24 @@ address wrapper
         const ENO_NOT_ROYALTY_RECEIVER:u64=2;
         /// No token in token store
         const ENO_NO_TOKEN_IN_TOKEN_STORE:u64=3;
+        /// Collection Name already initiated
+        const ENO_ALREADY_INITIATED:u64=4;
+        /// Collection not initiated
+        const ENO_NO_WRAP_OBJ:u64=5;
 
         struct Wrapper has key
         {
             collection:String,
             creator_address:address,
-            treasury_cap:account::SignerCapability,
-            key:vector<String>,
-            
+            treasury_cap:account::SignerCapability,            
+        }
+        struct ObjectMap  has key {
+        wraopObjMap: SimpleMap<vector<u8>,address>,
+        }
+        fun init_module(account:&signer)
+        {
+            move_to(account, ObjectMap { wraopObjMap: simple_map::create() })
+
         }
         // a token name with collection info is sent
         // royalty payee address is extracted to verify the creator
@@ -39,8 +52,7 @@ address wrapper
             collection_name: String,
             token_name:String,
             property_version:u64,
-            key:vector<String>,
-        ):Object<Wrapper> {
+        )acquires ObjectMap{
             let owner_addr = signer::address_of(owner);
             assert!(tokenv1::check_collection_exists(creator_address,collection_name),ENO_COLLECTION_DOESNT_EXIST);
             let token_id = tokenv1::create_token_id_raw(creator_address,collection_name,token_name,property_version);
@@ -74,10 +86,10 @@ address wrapper
                 collection:collection_name,
                 creator_address:creator_address,
                 treasury_cap:resource_cap,
-                key:key,
-
             });
-            object::address_to_object(signer::address_of(&signing))
+            let maps = borrow_global_mut<ObjectMap>(@wrapper);
+            assert!(!simple_map::contains_key(&maps.wraopObjMap, &bcs::to_bytes(&collection_name)),ENO_ALREADY_INITIATED);
+            simple_map::add(&mut maps.wraopObjMap, bcs::to_bytes(&collection_name),signer::address_of(&signing));
         }
 
         public entry fun wrap_token(
@@ -101,19 +113,38 @@ address wrapper
                 property_version,
                 1
             );
+            // let propertymap = tokenv1::get_property_map(holder_addr,token_id); // gives PropertyMap
+            // let keys = property_map::keys(&propertymap);
+            // let types = vector<String>[];
+            // let values = vector<vector<u8>>[];
+            // if (vector::length(&keys)>1)
+            // {
+            //     types=property_map::types(&propertymap);
+            //     values= property_map::values(&propertymap);
+            // };
             tokenv2::mint(
             &resource_signer_from_cap,
             wrap_info.collection,
             tokenv1::get_tokendata_description(token_data),
             token_name,
             tokenv1::get_tokendata_uri(wrap_info.creator_address,token_data),
+            // keys,
+            // types,
+            // values,
             vector<String>[],
             vector<String>[],
-            vector<vector<u8>>[],);
+            vector<vector<u8>>[],
+            ); 
             let minted_token = object::address_to_object<TokenV2>(object::create_guid_object_address(account::get_signer_capability_address(&wrap_info.treasury_cap), token_creation_num));
             object::transfer( &resource_signer_from_cap, minted_token, holder_addr);
         }
-
-
+        #[view]
+        public fun wrap_obj_address(collection:String) : address acquires ObjectMap
+        {
+            let maps = borrow_global<ObjectMap>(@wrapper);
+            assert!(simple_map::contains_key(&maps.wraopObjMap, &bcs::to_bytes(&collection)),ENO_NO_WRAP_OBJ);
+            let obj_address = *simple_map::borrow(&maps.wraopObjMap, &bcs::to_bytes(&collection));
+            obj_address
+        }
 }
 }
