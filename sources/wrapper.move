@@ -11,11 +11,11 @@ address wrapper
         use aptos_token_objects::aptos_token::{Self as tokenv2,AptosToken as TokenV2};
         use aptos_framework::account;
         use aptos_std::option;
-        use std::vector;
+        // use std::vector;
         use aptos_std::simple_map::{Self, SimpleMap};
 
         use aptos_token::token as tokenv1;
-        use aptos_token::property_map;
+        // use aptos_token::property_map;
 
         /// The collection doesn't exist
         const ENO_COLLECTION_DOESNT_EXIST:u64=1;
@@ -113,15 +113,12 @@ address wrapper
                 property_version,
                 1
             );
+            // functions not in testnet or mainnet
             // let propertymap = tokenv1::get_property_map(holder_addr,token_id); // gives PropertyMap
             // let keys = property_map::keys(&propertymap);
-            // let types = vector<String>[];
-            // let values = vector<vector<u8>>[];
-            // if (vector::length(&keys)>1)
-            // {
-            //     types=property_map::types(&propertymap);
-            //     values= property_map::values(&propertymap);
-            // };
+            // let types=property_map::types(&propertymap);
+            // let values= property_map::values(&propertymap);
+
             tokenv2::mint(
             &resource_signer_from_cap,
             wrap_info.collection,

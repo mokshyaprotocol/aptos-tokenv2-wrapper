@@ -1,8 +1,6 @@
 
 import { HexString,AptosClient, Provider, Types,Network,TxnBuilderTypes, BCS } from "aptos";
 
-const NODE_URL = process.env.APTOS_NODE_URL || "https://fullnode.devnet.aptoslabs.com";
-const FAUCET_URL = process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptoslabs.com";
 
 
 export class WrapperClient
@@ -35,7 +33,7 @@ export class WrapperClient
     return await this.provider.generateTransaction(creatorAddress, {
       function: `${this.pid}::wrapper::initiate_collection`,
       type_arguments: [],
-      arguments: [creatorAddress, collectionName,tokenName,propertyVersion],
+      arguments: [creatorAddress, collectionName,tokenName,propertyVersion,],
     });
   }
   /**

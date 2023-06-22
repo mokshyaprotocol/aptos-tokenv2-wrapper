@@ -1,22 +1,29 @@
 
-import { AptosClient,TokenClient, AptosAccount,Network, HexString,BCS } from "aptos";
+import { AptosClient,TokenClient, AptosAccount,Network, HexString,BCS,FaucetClient } from "aptos";
 import {WrapperClient} from "../package/wrapper"
 
 
 
 const NODE_URL = process.env.APTOS_NODE_URL || "https://fullnode.testnet.aptoslabs.com";
-const FAUCET_URL = process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptoslabs.com";
-
-
 const client = new AptosClient(NODE_URL);
+
 //pid
-const pid="0x694a262f0a7d74cc2f2c2c4c87f30b485ed427e004d98ad1b0557e084046a1ad";
+const pid="0xc5a997aa6cf261756b1b88823ba91b8795e85a6f309ab82f315cc7b6ed2bde01";
 const wrapClient = new WrapperClient(NODE_URL,pid,Network.TESTNET)
 // Creator Account for test purposes only
 const account1 =  new AptosAccount(HexString.ensure("0x1111111111111111111111111111111111111111111111111111111111111111").toUint8Array());
 // Token Owner Account for test purposes only
 const account2 =  new AptosAccount(HexString.ensure("0x1111111111111111111111111111111111111111111111111111111111111112").toUint8Array());
-const collection = "Mokshya Collection 8"
+function makeid(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+const collection = "Mokshya Collection"+makeid(10)
 const tokenname = "Mokshya Token #1";
 const description="Mokshya Token for test"
 const uri = "https://github.com/mokshyaprotocol"
@@ -31,7 +38,7 @@ const tokenId = {
   token_data_id,
   property_version: `${tokenPropertyVersion}`,
 };
-const tokenClient = new TokenClient(client); // <:!:section_1b
+const tokenClient = new TokenClient(client);
 
  describe("Token Wrap", () => {
   before("Create Collection", async () => {
@@ -88,7 +95,8 @@ const tokenClient = new TokenClient(client); // <:!:section_1b
     console.log(`Transfer Token Txn: https://explorer.aptoslabs.com/txn/${txnhash}?network=testnet`);
   });
   it ("Initiate Collection For Wrapping", async () => {
-    let raw_txn = await wrapClient.initiate_collection(account1.address(),collection,tokenname,tokenPropertyVersion)
+    let key=["TOKEN_BURNABLE_BY_OWNER"]
+    let raw_txn = await wrapClient.initiate_collection(account1.address(),collection,tokenname,tokenPropertyVersion,)
     let txnhash = await client.signAndSubmitTransaction(account1,raw_txn)
     await client.waitForTransaction(txnhash, { checkSuccess: true });
     console.log(`Initiate Collection Txn: https://explorer.aptoslabs.com/txn/${txnhash}?network=testnet`);
